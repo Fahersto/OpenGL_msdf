@@ -178,30 +178,12 @@ void FontAtlas::DrawText(Renderer& renderer, std::string text)
         ));
 
         auto& currentGlyph = GetGlyphByCodePoint(character);
-
       
         double advance;
         fontGeometry.getAdvance(advance, lastChar, character);
-        auto kerning = fontGeometry.getKerning();
-
-        double kerningVal = kerning[std::make_pair<>(lastGypth.getIndex(), currentGlyph.getIndex())];
-        int boxWidth, boxHeight;
-        currentGlyph.getBoxSize(boxWidth, boxHeight);
-
-        double l, b, r, t;
-        currentGlyph.getQuadAtlasBounds(l, b, r, t);
-
-        int x, y, w, h;
-        currentGlyph.getBoxRect(x, y, w, h);
-
-        auto translate = currentGlyph.getBoxTranslate();
-        
-        currentGlyph.getQuadPlaneBounds(l, b, r, t);
-
-        currentGlyph.getShape().bound(l,b,r,t);
 
         auto bounds = currentGlyph.getShape().getBounds();
-        cursor += (advance * bitmapWidth) / renderer.GetResolution().x;
+        cursor += advance;
 
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glLineWidth(4);

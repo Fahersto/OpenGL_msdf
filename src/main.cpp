@@ -87,7 +87,7 @@ int main()
     glfwSetKeyCallback(window, key_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    FontAtlas fontAtlas = FontAtlas("C:\\GameOfSquids.ttf");
+    FontAtlas fontAtlas = FontAtlas("C:\\Windows\\Fonts\\arial.ttf");
 
     auto currentFrame = std::chrono::steady_clock::now();
     auto lastFrame = std::chrono::steady_clock::now();

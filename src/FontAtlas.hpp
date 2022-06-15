@@ -10,16 +10,18 @@ struct Glyph
 {
 	glm::vec2 start_;
 	glm::vec2 end_;
+	double advance_;
 
 	Glyph()
 	{
 
 	}
 
-	Glyph(glm::vec2 start, glm::vec2 end)
+	Glyph(glm::vec2 start, glm::vec2 end, double advance)
 	{
 		start_ = start;
 		end_ = end;
+		advance_ = advance;
 	}
 };
 

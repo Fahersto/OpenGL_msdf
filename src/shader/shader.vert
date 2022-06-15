@@ -9,7 +9,6 @@ out vec2 TexCoords;
 
 void main()
 {
-	//Any changes here have to be reflected in the OpenGLRenderer: WorldToScreen/ScreenToWorld would break
 	gl_Position =  projection * camera * model * (vec4(vertex,  1.0) + vec4(renderingOffset, 0, 0));
 	TexCoords = vertex.xy;
 };

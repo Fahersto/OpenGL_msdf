@@ -49,7 +49,7 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 	projection_ = glm::ortho(0.0f, worldUnits.x, 0.0f, worldUnits.y, -100.f, 100.f);
 
 
-	shader_ = Shader::CompileFromFile("C:\\Users\\fahersto\\repos\\OpenGL_msdf\\src\\shader\\shader.vert", "C:\\Users\\fahersto\\repos\\OpenGL_msdf\\src\\shader\\shader.frag");
+	shader_ = Shader::CompileFromFile("C:\\Users\\Fabian Stotz\\playground\\OpenGL_msdf\\src\\shader\\shader.vert", "C:\\Users\\Fabian Stotz\\playground\\OpenGL_msdf\\src\\shader\\shader.frag");
 	shader_->Use();
 
 

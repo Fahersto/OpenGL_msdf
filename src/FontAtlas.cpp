@@ -171,13 +171,6 @@ void FontAtlas::DrawText(Renderer& renderer, std::string text)
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
-        // xOffset + yOffset (is this advance?) + kerning
-
-        //https://levelup.gitconnected.com/msdf-font-rendering-in-webgl-91ce192d2bec
-        //1. nur width
-        //2. y offset
-        //3. x offset <-- kerning part of this
-        //double kerning = kerning_[std::make_pair<>(lastChar, character)];
        
         shader->SetVector2f("renderingOffset", glm::vec2(
             -start.x - delta.x / 2 + cursor,

@@ -80,8 +80,8 @@ void HandleCamera(double deltaTimeMilliSeconds)
 
 int main()
 {
-    glm::vec2 windowSize = glm::vec2(2560, 1440);
-    //glm::vec2 windowSize = glm::vec2(1280, 720);
+    //glm::vec2 windowSize = glm::vec2(2560, 1440);
+    glm::vec2 windowSize = glm::vec2(1280, 720);
     GLFWwindow* window = renderer.CreateWindow("OpenGL - msdf - atlas", windowSize, glm::vec2(160, 90));
     
     glfwSetKeyCallback(window, key_callback);
@@ -111,7 +111,7 @@ int main()
         auto deltaTimeMilliSeconds = std::chrono::duration_cast<std::chrono::microseconds>(currentFrame - lastFrame).count() / 1000.f;
 
         // clear last frame
-        glClearColor(.3f, .3f, .3f, 1.0f);
+        glClearColor(0.3f, 0.2f, 0.6f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // handle user camera movement
@@ -125,22 +125,21 @@ int main()
         glDisable(GL_DEPTH_TEST);
 
         glm::vec4 red = glm::vec4(1, 0, 0, 1);
-        glm::vec4 green = glm::vec4(0, 1, 0, 1);
-        glm::vec4 blue = glm::vec4(0, 0, 1, 1);
         glm::vec4 white = glm::vec4(1, 1, 1, 1);
+        glm::vec4 green = glm::vec4(0, 1, 0, 1);
 
         // draw the text
-        //fontAtlas.DrawText("Hello  World!", glm::vec3(10, 10, 0), 20);
+        renderer.DrawText(fontAtlas, "Controls\n\tMove camera:\n\t\twasd/arrowkeys\n\tZoom:\n\t\tscrollwheel", glm::vec3(-80, 30, 0), 2, white, false);
         renderer.DrawText(fontAtlas, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
         renderer.DrawText(fontAtlas, "LEFT aligned", glm::vec3(0, 10, 0), 10, green, false);
-        renderer.DrawText(fontAtlas, "123456789", glm::vec3(0, 30, 0), 10, white);
-        renderer.DrawText(fontAtlas, "Hello\nWorld\n!", glm::vec3(0, 70, 0), 6, white);
+        renderer.DrawText(fontAtlas, "I'm a centered text\nwith several\nrows!", glm::vec3(0, -20, 0), 4, white);
 
-        for (int i = 0; i < 100; i++)
+        const int count = 200;
+        std::string text = "Render this " + std::to_string(count) + " times";
+        for (int i = 0; i < count; i++)
         {
-            renderer.DrawText(fontAtlas, "ABCDEFG", glm::vec3(0, -i*0.1, 0), 10, white);
+            renderer.DrawText(fontAtlas, text, glm::vec3(0, -i*0.1, 0), 10, white);
         }
-
 
         // enable depth testing
         glEnable(GL_DEPTH_TEST);

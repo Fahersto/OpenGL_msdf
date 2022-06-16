@@ -6,38 +6,19 @@
 #include "glm/glm.hpp"
 
 class Texture;
-typedef unsigned int TextureHandle;
-struct Glyph
-{
-	glm::vec2 start_;
-	glm::vec2 end_;
-	double advance_;
-
-	Glyph()
-	{
-
-	}
-
-	Glyph(glm::vec2 start, glm::vec2 end, double advance)
-	{
-		start_ = start;
-		end_ = end;
-		advance_ = advance;
-	}
-};
 struct VertexData
 {
 	glm::vec3 ep_position;
-	glm::vec2 in_uv;
+	glm::vec2 atlasUV;
 	glm::vec4 color;
 };
 
-class Renderer;
+
 class FontAtlas
 {
 	unsigned int quadVAO_;
 	unsigned int vbo_;
-	unsigned int texture_;
+	unsigned int fontTexture_;
 
 	void Initialize(std::string fontFile);
 
@@ -46,12 +27,10 @@ class FontAtlas
 public:
 	FontAtlas(std::string fontFile);
 
-	void GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t);
-
-	void GetFontCharQuadBounds(TextureHandle atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar);
-
-	double GetFontCharAdvance(TextureHandle atlas, uint32_t unicodeChar);
-	void GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight);
+	void GetFontCharUVBounds(unsigned int atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t);
+	void GetFontCharQuadBounds(unsigned int atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar);
+	double GetFontCharAdvance(unsigned int atlas, uint32_t unicodeChar);
+	void GetFontVerticalMetrics(unsigned int atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight);
 
 	unsigned int GetTexture();
 	unsigned int GetVBO();

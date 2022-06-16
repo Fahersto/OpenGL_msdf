@@ -7,11 +7,62 @@
 #include "Shader.hpp"
 #include "FontAtlas.hpp"
 
-glm::vec2 size = glm::vec2(40, 40);
+
+const char* vertexShaderSource = "#version 330 core\n"
+"layout(location = 0) in vec3 vertex; \n"
+"layout(location = 1) in vec2 uv;\n"
+"layout(location = 2) in vec4 col;\n"
+"\n"
+"uniform mat4 model;\n"
+"uniform mat4 projection;\n"
+"uniform mat4 camera;\n"
+"\n"
+"out vec2 TexCoords;\n"
+"out vec4 color;\n"
+"\n"
+"void main()\n"
+"{\n"
+"	gl_Position = projection * camera * model * vec4(vertex, 1.0);\n"
+"	TexCoords = uv;\n"
+"	color = col;\n"
+"}\n";
+
+
+
+const char* fragmentShaderSource = "#version 330 core\n"
+"in vec2 TexCoords;\n"
+"in vec4 color;\n"
+"\n"
+"uniform sampler2D image;\n"
+"uniform float screenPxRange;\n"
+"\n"
+"float median(float r, float g, float b)\n"
+"{\n"
+"	return max(min(r, g), min(max(r, g), b));\n"
+"}\n"
+"\n"
+"void main()\n"
+"{\n"
+"	vec3 msd = texture(image, TexCoords).rgb;\n"
+"	float sd = median(msd.r, msd.g, msd.b);\n"
+"\n"
+"	vec4 bgColor = vec4(.0, .0, .0, .0);\n"
+"\n"
+"	float screenPxDistance = screenPxRange * (sd - 0.5);\n"
+"	float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);\n"
+"	gl_FragColor = mix(bgColor, color, opacity);\n"
+"\n"
+"	if (opacity < 0.5f)	\n"
+"	{\n"
+"		discard;\n"
+"	}\n"
+"}\n";
+
 
 // initially space for 240 / 6 = 40 letters
 std::vector<VertexData> quadVertices(240);
 int totalQuads = 0;
+
 
 Renderer::Renderer()
 	: cameraPosition_(glm::vec2(0,0)), zoom_(1.0f)
@@ -42,27 +93,22 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSwapInterval(0); //disable vsync
-	//glfwSetWindowCloseCallback(window_, windowCloseCallback);
-
-	// Setup Platform/Renderer backends
-	const char* glsl_version = "#version 130";
-
-	//TODO. The question here is: do I want the same things to be visible at any resolution? (probably). Therefore I woul need to hardcode the number.
-	// 	   Or do I want to higher resolution to see more:
-	//		projection_ = glm::ortho(0.0f, static_cast<float>(xResolution), 0.0f, static_cast<float>(yResolution), -1.f, 1.f);
-	//The projection is used to normalize coordinates to the [-1, 1] range that OpenGL uses. This means that at any 16:9 ratio square will look like a square
-	projection_ = glm::ortho(0.0f, worldUnits.x, 0.0f, worldUnits.y, -100.f, 100.f);
 
 
-	shader_ = Shader::CompileFromFile("C:\\Users\\fahersto\\repos\\OpenGL_msdf\\src\\shader\\shader.vert", "C:\\Users\\fahersto\\repos\\OpenGL_msdf\\src\\shader\\shader.frag");
+
+	projection_ = glm::ortho(0.0f, worldUnits.x, 0.0f, worldUnits.y, -1.f, 1.f);
+
+
+	// setup the shader
+	shader_ = std::make_shared<Shader>();
+	shader_->Compile(vertexShaderSource, fragmentShaderSource);
 	shader_->Use();
 
 
 	shader_->SetMatrix4("projection", projection_, true);
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(80, 20, 0.0f));
-
+	model = glm::translate(model, glm::vec3(80, 40, 0.0f));
 	shader_->SetMatrix4("model", model);
 
 	return window_;
@@ -70,6 +116,8 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 
 void Renderer::BeginFrame()
 {
+	// wee don't have to clear quadVertices because we will just render the nearly entered totalQuads anyway
+	// clearing and reallocating the memory would only slow things down
 	totalQuads = 0;
 
 	glm::mat4 camera(1.0f);
@@ -77,14 +125,14 @@ void Renderer::BeginFrame()
 	camera = glm::translate(camera, glm::vec3(cameraPosition_, 0.f));
 	shader_->SetMatrix4("camera", camera);
 
+	// for 2d rendering https://github.com/Chlumsky/msdfgen states that screenPxRange can be a precomputed value even.. 
+	// according to be docs sizeInPixels should be the quadsize (so a single letter)
+	// we currently don't have a method to get this sice for each letter since we are batch rendering
 	int pixelRange = 2;
 	glm::vec2  distanceField = glm::vec2(256, 256);
-	glm::vec2 sizeInPixels = this->EuToPixel(size) * this->GetZoom();
+	glm::vec2 sizeInPixels = this->EuToPixel(glm::vec2(20, 20)) * this->GetZoom();
 	float screenPxRange = (sizeInPixels.x / distanceField.x) * pixelRange;
 	shader_->SetFloat("screenPxRange", screenPxRange);
-	shader_->SetVector2f("sizeInPixels", sizeInPixels);
-
-
 }
 
 void Renderer::EndFrame(FontAtlas& atlas)
@@ -141,31 +189,32 @@ std::shared_ptr<Shader> Renderer::GetShader()
 
 void Renderer::DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center)
 {
-	// we render each letters as two triangles with 3 verts each
+	// we render each letter as two triangles with 3 verts each
 	const int vertsPerCharacter = 6;
-
-	while (quadVertices.size() <= (totalQuads + text.length()) * vertsPerCharacter) // total letters
-	{
-		quadVertices.resize(quadVertices.size() * 2);
-		printf("Resized to: %d\n", quadVertices.size());
-	}
-
-	shader_->SetVector4f("spriteColor", color);
-	auto fontTexture = atlas.GetTexture();
 
 	constexpr double tabWidthInEms = 2.0;
 
-	double xoffset, yoffset;
+	// check if our batch rendering has anough space for all vertices
+	while (quadVertices.size() <= (totalQuads + text.length()) * vertsPerCharacter)
+	{
+		quadVertices.resize(quadVertices.size() * 2);
+		printf("Resized capacity of batch renderer to: %lld\n", quadVertices.size());
+	}
+
+	unsigned int fontTexture = atlas.GetTexture();
+
 	double fontLineHeight = 0.0, fontAscenderHeight = 0.0, fontDescenderHeight = 0.0;
 	atlas.GetFontVerticalMetrics(fontTexture, fontLineHeight, fontAscenderHeight, fontDescenderHeight);
 
-	yoffset = fontDescenderHeight - 1.0;
+	double xoffset = 0;
+	double yoffset = fontDescenderHeight - 1.0;
 
 	size_t currentQuadIndex = 0;
 	unsigned int currentLine = 0;
 	char prevChar = 0;
 	double cursorPos = 0.0;
 
+	// calculate line widths required for text alignment
 	std::vector<double> lineWidths;
 	lineWidths.emplace_back();
 	size_t lineCount = 1;
@@ -193,11 +242,9 @@ void Renderer::DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, 
 	}
 
 
-
+	// perform font calulation and add geometry to batch renderer   
 	for (const char& c : text)
 	{
-		xoffset = 0.0;
-
 		if (c == '\n')
 		{
 			currentLine++;
@@ -223,15 +270,15 @@ void Renderer::DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, 
 
 		float l, r, b, t;
 		atlas.GetFontCharUVBounds(fontTexture, c, l, r, b, t);
-		quadVertices[totalQuads * vertsPerCharacter].in_uv = { l, t }; //lt
-		quadVertices[totalQuads * vertsPerCharacter + 1].in_uv = { r, b };	//rb
-		quadVertices[totalQuads * vertsPerCharacter + 2].in_uv = { l, b };	//lb
-		quadVertices[totalQuads * vertsPerCharacter + 3].in_uv = { l, t };	//lt
-		quadVertices[totalQuads * vertsPerCharacter + 4].in_uv = { r, t };	//rt
-		quadVertices[totalQuads * vertsPerCharacter + 5].in_uv = { r, b };	//rb
+		quadVertices[totalQuads * vertsPerCharacter].atlasUV	 = { l, t }; //lt
+		quadVertices[totalQuads * vertsPerCharacter + 1].atlasUV = { r, b }; //rb
+		quadVertices[totalQuads * vertsPerCharacter + 2].atlasUV = { l, b }; //lb
+		quadVertices[totalQuads * vertsPerCharacter + 3].atlasUV = { l, t }; //lt
+		quadVertices[totalQuads * vertsPerCharacter + 4].atlasUV = { r, t }; //rt
+		quadVertices[totalQuads * vertsPerCharacter + 5].atlasUV = { r, b }; //rb
 
 		atlas.GetFontCharQuadBounds(fontTexture, c, l, r, b, t, prevChar);
-		quadVertices[totalQuads * vertsPerCharacter].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
+		quadVertices[totalQuads * vertsPerCharacter].ep_position	 = position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
 		quadVertices[totalQuads * vertsPerCharacter + 1].ep_position = position + glm::vec3(size * (r + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // rb
 		quadVertices[totalQuads * vertsPerCharacter + 2].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // lb
 		quadVertices[totalQuads * vertsPerCharacter + 3].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt

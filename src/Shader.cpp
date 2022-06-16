@@ -20,57 +20,7 @@ Shader& Shader::Use()
 	return *this;
 }
 
-std::shared_ptr<Shader> Shader::CompileFromFile(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile)
-{
-	// 1. retrieve the vertex/fragment source code from filePath
-	std::string vertexCode;
-	std::string fragmentCode;
-	std::string geometryCode;
-	try
-	{
-		// open files
-		std::ifstream vertexShaderFile(vShaderFile);
-		std::ifstream fragmentShaderFile(fShaderFile);
-		std::stringstream vShaderStream, fShaderStream;
-		// read file's buffer contents into streams
-		vShaderStream << vertexShaderFile.rdbuf();
-		fShaderStream << fragmentShaderFile.rdbuf();
-		// close file handlers
-		vertexShaderFile.close();
-		fragmentShaderFile.close();
-		// convert stream into string
-		vertexCode = vShaderStream.str();
-		fragmentCode = fShaderStream.str();
-
-		if (vertexCode.size() == 0 || fragmentCode.size() == 0)
-		{
-			//printf("Failed to read shader files\n\t{} bytes - {}\n\t{} bytes - {}", vertexCode.size(), vShaderFile, fragmentCode.size(), fShaderFile);
-			assert(vertexCode.size() && fragmentCode.size());
-		}
-		// if geometry shader path is present, also load a geometry shader
-		if (gShaderFile != nullptr)
-		{
-			std::ifstream geometryShaderFile(gShaderFile);
-			std::stringstream gShaderStream;
-			gShaderStream << geometryShaderFile.rdbuf();
-			geometryShaderFile.close();
-			geometryCode = gShaderStream.str();
-		}
-	}
-	catch (std::exception e)
-	{
-		printf("Failed to read shader files\n");
-		assert(false);
-	}
-	const char* vShaderCode = vertexCode.c_str();
-	const char* fShaderCode = fragmentCode.c_str();
-	const char* gShaderCode = geometryCode.c_str();
-	// 2. now create shader object from source code
-	std::shared_ptr<Shader> shader = std::make_shared<Shader>();
-	shader->Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
-	return shader;
-}
-
+// credits: learnopengl.com
 void Shader::Compile(const char* vertexSource, const char* fragmentSource, const char* geometrySource)
 {
 	unsigned int sVertex, sFragment, gShader;
@@ -79,6 +29,7 @@ void Shader::Compile(const char* vertexSource, const char* fragmentSource, const
 	glShaderSource(sVertex, 1, &vertexSource, NULL);
 	glCompileShader(sVertex);
 	checkCompileErrors(sVertex, "VERTEX");
+
 	// fragment Shader
 	sFragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(sFragment, 1, &fragmentSource, NULL);

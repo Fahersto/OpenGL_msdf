@@ -20,7 +20,7 @@ public:
 	// sets the current shader as active
 	Shader& Use();
 	// compiles the shader from given source code
-	static std::shared_ptr<Shader> CompileFromFile(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile = nullptr);
+
 	void Compile(const char* vertexSource, const char* fragmentSource, const char* geometrySource = nullptr); // note: geometry source code is optional 
 	// utility functions
 	void SetFloat(const char* name, float value, bool useShader = false);

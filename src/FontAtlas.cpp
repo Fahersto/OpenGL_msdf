@@ -11,16 +11,13 @@
 #include "Shader.hpp"
 
 
+static std::map<unsigned int, std::map<std::pair<uint32_t, uint32_t>, double>> fontKerns;
+static std::map<unsigned int, std::map<uint32_t, double>> fontAdvances;
+static std::map<unsigned int, std::map<uint32_t, std::tuple<float, float, float, float>>> fontUVBounds;
+static std::map<unsigned int, std::map<uint32_t, std::tuple<float, float, float, float>>> fontQuadBounds;
+static std::map<unsigned int, std::tuple<double, double, double>> fontVerticalMetrics;
 
-
-
-static std::map<TextureHandle, std::map<std::pair<uint32_t, uint32_t>, double>> fontKerns;
-static std::map<TextureHandle, std::map<uint32_t, double>> fontAdvances;
-static std::map<TextureHandle, std::map<uint32_t, std::tuple<float, float, float, float>>> fontUVBounds;
-static std::map<TextureHandle, std::map<uint32_t, std::tuple<float, float, float, float>>> fontQuadBounds;
-static std::map<TextureHandle, std::tuple<double, double, double>> fontVerticalMetrics; // line height, ascender height, descender height
-
-// copied from: https://github.com/Chlumsky/msdf-atlas-gen
+// generation of font atlas copied from: https://github.com/Chlumsky/msdf-atlas-gen
 void FontAtlas::Initialize(std::string fontFilename) {
 	using namespace msdf_atlas;
 	// Initialize instance of FreeType library
@@ -48,7 +45,7 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			// setDimensions or setDimensionsConstraint to find the best value
 			packer.setDimensionsConstraint(TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_SQUARE);
 			// setScale for a fixed size or setMinimumScale to use the largest that fits
-			packer.setMinimumScale(32.0);
+			packer.setMinimumScale(64.0);
 			// setPixelRange or setUnitRange
 			packer.setPixelRange(2.0);
 			packer.setMiterLimit(1.0);
@@ -88,13 +85,13 @@ void FontAtlas::Initialize(std::string fontFilename) {
 
 			float vertices[] = {
 				//vertex		  //uv in texture	//color
-				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 1    
-				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//       
-				0.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 3   2
-
-				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 4   5
-				1.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//      
-				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//     6 
+				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f,// 1    
+				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f,//       
+				0.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f,// 3   2
+																		0.0f,
+				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f,// 4   5
+				1.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f,//      
+				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	0.0f//     6 
 			};
 
 			glGenVertexArrays(1, &quadVAO_);
@@ -121,8 +118,8 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			glBindVertexArray(0);
 
 			// generate texture
-			glGenTextures(1, &this->texture_);
-			glBindTexture(GL_TEXTURE_2D, this->texture_);
+			glGenTextures(1, &this->fontTexture_);
+			glBindTexture(GL_TEXTURE_2D, this->fontTexture_);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, bitmap.pixels);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -139,7 +136,7 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			for (const msdf_atlas::GlyphGeometry& glyph : glyphs)
 			{
 				indexToCodePoint[glyph.getIndex()] = glyph.getCodepoint();
-				fontAdvances[this->texture_][glyph.getCodepoint()] = glyph.getAdvance();
+				fontAdvances[this->fontTexture_][glyph.getCodepoint()] = glyph.getAdvance();
 
 				double l, b, r, t;
 				glyph.getQuadAtlasBounds(l, b, r, t);
@@ -147,14 +144,14 @@ void FontAtlas::Initialize(std::string fontFilename) {
 				r /= bitmap.width;
 				b /= bitmap.height;
 				t /= bitmap.height;
-				fontUVBounds[this->texture_][glyph.getCodepoint()] = std::tuple(l, r, b, t);
+				fontUVBounds[this->fontTexture_][glyph.getCodepoint()] = std::tuple(l, r, b, t);
 
 				glyph.getQuadPlaneBounds(l, b, r, t);
-				fontQuadBounds[this->texture_][glyph.getCodepoint()] = std::tuple(l, r, b, t);
+				fontQuadBounds[this->fontTexture_][glyph.getCodepoint()] = std::tuple(l, r, b, t);
 			}
 
 			msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
-			fontVerticalMetrics[this->texture_] = std::tuple
+			fontVerticalMetrics[this->fontTexture_] = std::tuple
 			(
 				metrics.lineHeight,
 				metrics.ascenderY,
@@ -168,7 +165,7 @@ void FontAtlas::Initialize(std::string fontFilename) {
 					indexToCodePoint[indicesKey.first],
 					indexToCodePoint[indicesKey.second]
 				);
-				fontKerns[this->texture_][codePointsKey] = kernVal;
+				fontKerns[this->fontTexture_][codePointsKey] = kernVal;
 			}
 
 
@@ -180,7 +177,7 @@ void FontAtlas::Initialize(std::string fontFilename) {
 	}
 }
 
-void FontAtlas::GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar,
+void FontAtlas::GetFontCharUVBounds(unsigned int atlas, uint32_t unicodeChar,
 	float& out_l, float& out_r, float& out_b, float& out_t)
 {
 	if (fontUVBounds.count(atlas) > 0)
@@ -203,7 +200,7 @@ void FontAtlas::GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar,
 	}
 }
 
-void FontAtlas::GetFontCharQuadBounds(TextureHandle atlas, uint32_t unicodeChar,
+void FontAtlas::GetFontCharQuadBounds(unsigned int atlas, uint32_t unicodeChar,
 	float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar)
 {
 	if (fontQuadBounds.count(atlas) > 0)
@@ -231,7 +228,7 @@ void FontAtlas::GetFontCharQuadBounds(TextureHandle atlas, uint32_t unicodeChar,
 	}
 }
 
-double FontAtlas::GetFontCharAdvance(TextureHandle atlas, uint32_t unicodeChar)
+double FontAtlas::GetFontCharAdvance(unsigned int atlas, uint32_t unicodeChar)
 {
 	if (fontAdvances.count(atlas) > 0)
 	{
@@ -252,7 +249,7 @@ double FontAtlas::GetFontCharAdvance(TextureHandle atlas, uint32_t unicodeChar)
 	}
 }
 
-void FontAtlas::GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight)
+void FontAtlas::GetFontVerticalMetrics(unsigned int atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight)
 {
 	if (fontVerticalMetrics.count(atlas) > 0)
 	{
@@ -268,7 +265,7 @@ void FontAtlas::GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeig
 
 unsigned int FontAtlas::GetTexture()
 {
-	return texture_;
+	return fontTexture_;
 }
 
 unsigned int FontAtlas::GetVBO()

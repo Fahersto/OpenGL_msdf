@@ -14,9 +14,6 @@ int8_t keys_[1024];
 double scrollWheel_;
 
 
-std::string lorem = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.";
-
-
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     if (key >= 0 && key < 1024)
@@ -83,8 +80,8 @@ void HandleCamera(double deltaTimeMilliSeconds)
 
 int main()
 {
-    //glm::vec2 windowSize = glm::vec2(2560, 1440);
-    glm::vec2 windowSize = glm::vec2(1280, 720);
+    glm::vec2 windowSize = glm::vec2(2560, 1440);
+    //glm::vec2 windowSize = glm::vec2(1280, 720);
     GLFWwindow* window = renderer.CreateWindow("OpenGL - msdf - atlas", windowSize, glm::vec2(160, 90));
     
     glfwSetKeyCallback(window, key_callback);

@@ -9,8 +9,8 @@
 
 glm::vec2 size = glm::vec2(40, 40);
 
-// this allocates more memory than required since some characters (\n, \r, \t) produce no triangles
-std::vector<VertexData> quadVertices(1000);
+// initially space for 240 / 6 = 40 letters
+std::vector<VertexData> quadVertices(240);
 int totalQuads = 0;
 
 Renderer::Renderer()
@@ -144,7 +144,7 @@ void Renderer::DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, 
 	// we render each letters as two triangles with 3 verts each
 	const int vertsPerCharacter = 6;
 
-	if (quadVertices.size() <= (totalQuads + text.length()) * vertsPerCharacter) // total letters
+	while (quadVertices.size() <= (totalQuads + text.length()) * vertsPerCharacter) // total letters
 	{
 		quadVertices.resize(quadVertices.size() * 2);
 		printf("Resized to: %d\n", quadVertices.size());

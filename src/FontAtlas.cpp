@@ -87,14 +87,14 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			msdfgen::BitmapConstRef<unsigned char, 3> bitmap = generator.atlasStorage();
 
 			float vertices[] = {
-				//vertex		  //uv in texture atlas
-				0.0f, 1.0f, 0.0f, 0.0f,0.0f, // 1    
-				1.0f, 0.0f, 0.0f, 0.0f,0.0f, //       
-				0.0f, 0.0f, 0.0f, 0.0f,0.0f, // 3   2
+				//vertex		  //uv in texture	//color
+				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 1    
+				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//       
+				0.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 3   2
 
-				0.0f, 1.0f, 0.0f, 0.0f,0.0f, // 4   5
-				1.0f, 1.0f, 0.0f, 0.0f,0.0f, //      
-				1.0f, 0.0f, 0.0f, 0.0f,0.0f, //     6 
+				0.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	// 4   5
+				1.0f, 1.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//      
+				1.0f, 0.0f, 0.0f,	0.0f,0.0f,		0.0f, 0.0f,0.0f,	//     6 
 			};
 
 			glGenVertexArrays(1, &quadVAO_);
@@ -106,13 +106,16 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			glBindVertexArray(quadVAO_);
 
 			// vertex 
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
 			glEnableVertexAttribArray(0);
 
 			// uv
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
 			glEnableVertexAttribArray(1);
 
+			// color
+			glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(5 * sizeof(float)));
+			glEnableVertexAttribArray(2);
 
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindVertexArray(0);
@@ -263,116 +266,22 @@ void FontAtlas::GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeig
 	}
 }
 
+unsigned int FontAtlas::GetTexture()
+{
+	return texture_;
+}
+
+unsigned int FontAtlas::GetVBO()
+{
+	return vbo_;
+}
+
+unsigned int FontAtlas::GetQuadVAO()
+{
+	return quadVAO_;
+}
+
 FontAtlas::FontAtlas(std::string fontFile)
 {
 	this->Initialize(fontFile);
-}
-
-
-void FontAtlas::DrawText(Renderer& renderer, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center)
-{
-	renderer.GetShader()->SetVector4f("spriteColor", color);
-
-	constexpr double tabWidthInEms = 2.0;
-
-	double xoffset, yoffset;
-	double fontLineHeight = 0.0, fontAscenderHeight = 0.0, fontDescenderHeight = 0.0;
-	GetFontVerticalMetrics(texture_, fontLineHeight, fontAscenderHeight, fontDescenderHeight);
-
-	yoffset = fontDescenderHeight - 1.0;
-
-	size_t currentQuadIndex = 0;
-	unsigned int currentLine = 0;
-	char prevChar = 0;
-	double cursorPos = 0.0;
-
-	std::vector<double> lineWidths;
-	lineWidths.emplace_back();
-	size_t lineCount = 1;
-	for (const char& c : text)
-	{
-		switch (c)
-		{
-		case '\r':
-			lineWidths.back() = 0.0;
-			break;
-		case '\n': case '\f':
-			lineWidths.emplace_back();
-			lineCount++;
-			break;
-		case '\t':
-		{
-			unsigned int cursorPosRoundedDown = (unsigned int)lineWidths.back();
-			lineWidths.back() = double(cursorPosRoundedDown) + tabWidthInEms - (fmod(cursorPosRoundedDown, tabWidthInEms));
-			break;
-		}
-		default:
-			lineWidths.back() += GetFontCharAdvance(texture_, c);
-			break;
-		}
-	}
-
-	// this allocates more memory than required since some characters (\n, \r, \t) produce no triangles
-	std::vector<VertexData> quadVertices(6 * text.length());
-
-	const int vertsPerChar = 6; // we render them as two triangles with 3 verts each
-
-	for (const char& c : text)
-	{
-		xoffset = 0.0;
-
-		if (c == '\n')
-		{
-			currentLine++;
-			cursorPos = 0.0;
-			continue;
-		}
-		if (c == '\r')
-		{
-			cursorPos = 0.0;
-			continue;
-		}
-		if (c == '\t')
-		{
-			unsigned int cursorPosRoundedDown = (unsigned int)cursorPos;
-			cursorPos = double(cursorPosRoundedDown) + tabWidthInEms - fmod(cursorPosRoundedDown, tabWidthInEms);
-			continue;
-		}
-
-		if (center)
-		{
-			xoffset = -lineWidths[currentLine] / 2.0;
-		}
-
-		float l, r, b, t;
-		GetFontCharUVBounds(texture_, c, l, r, b, t);
-		quadVertices[currentQuadIndex * vertsPerChar].in_uv		= { l, t }; //lt
-		quadVertices[currentQuadIndex * vertsPerChar + 1].in_uv	= { r, b };	//rb
-		quadVertices[currentQuadIndex * vertsPerChar + 2].in_uv	= { l, b };	//lb
-		quadVertices[currentQuadIndex * vertsPerChar + 3].in_uv	= { l, t };	//lt
-		quadVertices[currentQuadIndex * vertsPerChar + 4].in_uv	= { r, t };	//rt
-		quadVertices[currentQuadIndex * vertsPerChar + 5].in_uv	= { r, b };	//rb
-
-		GetFontCharQuadBounds(texture_, c, l, r, b, t, prevChar);
-		quadVertices[currentQuadIndex * vertsPerChar].ep_position		= position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
-		quadVertices[currentQuadIndex * vertsPerChar + 1].ep_position	= position + glm::vec3(size * (r + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // rb
-		quadVertices[currentQuadIndex * vertsPerChar + 2].ep_position	= position + glm::vec3(size * (l + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // lb
-		quadVertices[currentQuadIndex * vertsPerChar + 3].ep_position	= position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
-		quadVertices[currentQuadIndex * vertsPerChar + 4].ep_position	= position + glm::vec3(size * (r + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // rt
-		quadVertices[currentQuadIndex * vertsPerChar + 5].ep_position	= position + glm::vec3(size * (r + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // rb
-
-		prevChar = c;
-		currentQuadIndex++;
-		cursorPos += GetFontCharAdvance(texture_, c);
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-
-	auto byteSize = sizeof(VertexData) * 6 * currentQuadIndex;
-	glBufferData(GL_ARRAY_BUFFER, byteSize, quadVertices.data(), GL_DYNAMIC_DRAW);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, this->texture_);
-	glBindVertexArray(this->quadVAO_);
-	glDrawArrays(GL_TRIANGLES, 0, 6 * currentQuadIndex);
 }

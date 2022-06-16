@@ -127,18 +127,29 @@ int main()
         // disable depth testing to prevent issues with slightly  overlapping characters
         glDisable(GL_DEPTH_TEST);
 
-        glm::vec4 color = glm::vec4(1, 0, 0, 0.3f);
+        glm::vec4 red = glm::vec4(1, 0, 0, 1);
+        glm::vec4 green = glm::vec4(0, 1, 0, 1);
+        glm::vec4 blue = glm::vec4(0, 0, 1, 1);
+        glm::vec4 white = glm::vec4(1, 1, 1, 1);
+
         // draw the text
         //fontAtlas.DrawText("Hello  World!", glm::vec3(10, 10, 0), 20);
-        fontAtlas.DrawText(renderer, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 0, 0), 20, color);
-        fontAtlas.DrawText(renderer, "ABCDEFG", glm::vec3(0, 10, 0), 10, color);
-        fontAtlas.DrawText(renderer, "Hello World!", glm::vec3(0, 20, 0), 10, color);
-        fontAtlas.DrawText(renderer, "123456789", glm::vec3(0, 30, 0), 10, color);
-        fontAtlas.DrawText(renderer, "Hello\nWorld\n!", glm::vec3(0, 70, 0), 10, color);
+        renderer.DrawText(fontAtlas, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
+        renderer.DrawText(fontAtlas, "LEFT aligned", glm::vec3(0, 10, 0), 10, green, false);
+        renderer.DrawText(fontAtlas, "123456789", glm::vec3(0, 30, 0), 10, white);
+        renderer.DrawText(fontAtlas, "Hello\nWorld\n!", glm::vec3(0, 70, 0), 6, white);
+
+        for (int i = 0; i < 100; i++)
+        {
+            renderer.DrawText(fontAtlas, "ABCDEFG", glm::vec3(0, -i*0.1, 0), 10, white);
+        }
+
 
         // enable depth testing
         glEnable(GL_DEPTH_TEST);
         
+        renderer.EndFrame(fontAtlas);
+
         // draw frame
         glfwSwapBuffers(window);
 

@@ -29,6 +29,7 @@ struct VertexData
 {
 	glm::vec3 ep_position;
 	glm::vec2 in_uv;
+	glm::vec4 color;
 };
 
 class Renderer;
@@ -40,18 +41,20 @@ class FontAtlas
 
 	void Initialize(std::string fontFile);
 
-	void GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar,
-		float& out_l, float& out_r, float& out_b, float& out_t);
 
-	void GetFontCharQuadBounds(TextureHandle atlas, uint32_t unicodeChar,
-		float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar);
-
-	double GetFontCharAdvance(TextureHandle atlas, uint32_t unicodeChar);
-
-	void GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight);
 	
 public:
 	FontAtlas(std::string fontFile);
 
-	void DrawText(Renderer& renderer, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center = true);
+	void GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t);
+
+	void GetFontCharQuadBounds(TextureHandle atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar);
+
+	double GetFontCharAdvance(TextureHandle atlas, uint32_t unicodeChar);
+	void GetFontVerticalMetrics(TextureHandle atlas, double& out_lineHeight, double& out_ascenderHeight, double& out_descenderHeight);
+
+	unsigned int GetTexture();
+	unsigned int GetVBO();
+	unsigned int GetQuadVAO();
+
 };

@@ -5,6 +5,7 @@
 
 struct GLFWwindow;
 class Shader;
+class FontAtlas;
 class Renderer
 {
 	//Projects the ingame units to normalized opengl coordinates ([-1,1])
@@ -25,6 +26,7 @@ public:
 	Renderer();
 	GLFWwindow* CreateWindow(std::string name, glm::vec2 resolution, glm::vec2 worldUnits);
 	void BeginFrame();
+	void EndFrame(FontAtlas& atlas);
 
 	glm::vec2 GetCameraPosition();
 	void SetCameraPosition(glm::vec2 position);
@@ -37,4 +39,6 @@ public:
 	glm::vec2 EuToPixel(glm::vec2 size);
 
 	std::shared_ptr<Shader> GetShader();
+
+	void DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center = true);
 };

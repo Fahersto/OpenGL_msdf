@@ -5,8 +5,13 @@
 #include "glm/ext.hpp"
 
 #include "Shader.hpp"
+#include "FontAtlas.hpp"
 
 glm::vec2 size = glm::vec2(40, 40);
+
+// this allocates more memory than required since some characters (\n, \r, \t) produce no triangles
+std::vector<VertexData> quadVertices(1000);
+int totalQuads = 0;
 
 Renderer::Renderer()
 	: cameraPosition_(glm::vec2(0,0)), zoom_(1.0f)
@@ -65,6 +70,8 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 
 void Renderer::BeginFrame()
 {
+	totalQuads = 0;
+
 	glm::mat4 camera(1.0f);
 	camera = glm::scale(camera, glm::vec3(zoom_, zoom_, 1.0f));
 	camera = glm::translate(camera, glm::vec3(cameraPosition_, 0.f));
@@ -78,6 +85,20 @@ void Renderer::BeginFrame()
 	shader_->SetVector2f("sizeInPixels", sizeInPixels);
 
 
+}
+
+void Renderer::EndFrame(FontAtlas& atlas)
+{
+
+	glBindBuffer(GL_ARRAY_BUFFER, atlas.GetVBO());
+
+	auto byteSize = sizeof(VertexData) * 6 * totalQuads;
+	glBufferData(GL_ARRAY_BUFFER, byteSize, quadVertices.data(), GL_DYNAMIC_DRAW);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, atlas.GetTexture());
+	glBindVertexArray(atlas.GetQuadVAO());
+	glDrawArrays(GL_TRIANGLES, 0, 6 * totalQuads);
 }
 
 glm::vec2 Renderer::GetCameraPosition()
@@ -116,4 +137,116 @@ glm::vec2 Renderer::EuToPixel(glm::vec2 size)
 std::shared_ptr<Shader> Renderer::GetShader()
 {
 	return shader_;
+}
+
+void Renderer::DrawText(FontAtlas& atlas, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center)
+{
+	// we render each letters as two triangles with 3 verts each
+	const int vertsPerCharacter = 6;
+
+	if (quadVertices.size() <= (totalQuads + text.length()) * vertsPerCharacter) // total letters
+	{
+		quadVertices.resize(quadVertices.size() * 2);
+		printf("Resized to: %d\n", quadVertices.size());
+	}
+
+	shader_->SetVector4f("spriteColor", color);
+	auto fontTexture = atlas.GetTexture();
+
+	constexpr double tabWidthInEms = 2.0;
+
+	double xoffset, yoffset;
+	double fontLineHeight = 0.0, fontAscenderHeight = 0.0, fontDescenderHeight = 0.0;
+	atlas.GetFontVerticalMetrics(fontTexture, fontLineHeight, fontAscenderHeight, fontDescenderHeight);
+
+	yoffset = fontDescenderHeight - 1.0;
+
+	size_t currentQuadIndex = 0;
+	unsigned int currentLine = 0;
+	char prevChar = 0;
+	double cursorPos = 0.0;
+
+	std::vector<double> lineWidths;
+	lineWidths.emplace_back();
+	size_t lineCount = 1;
+	for (const char& c : text)
+	{
+		switch (c)
+		{
+		case '\r':
+			lineWidths.back() = 0.0;
+			break;
+		case '\n': case '\f':
+			lineWidths.emplace_back();
+			lineCount++;
+			break;
+		case '\t':
+		{
+			unsigned int cursorPosRoundedDown = (unsigned int)lineWidths.back();
+			lineWidths.back() = double(cursorPosRoundedDown) + tabWidthInEms - (fmod(cursorPosRoundedDown, tabWidthInEms));
+			break;
+		}
+		default:
+			lineWidths.back() += atlas.GetFontCharAdvance(fontTexture, c);
+			break;
+		}
+	}
+
+
+
+	for (const char& c : text)
+	{
+		xoffset = 0.0;
+
+		if (c == '\n')
+		{
+			currentLine++;
+			cursorPos = 0.0;
+			continue;
+		}
+		if (c == '\r')
+		{
+			cursorPos = 0.0;
+			continue;
+		}
+		if (c == '\t')
+		{
+			unsigned int cursorPosRoundedDown = (unsigned int)cursorPos;
+			cursorPos = double(cursorPosRoundedDown) + tabWidthInEms - fmod(cursorPosRoundedDown, tabWidthInEms);
+			continue;
+		}
+
+		if (center)
+		{
+			xoffset = -lineWidths[currentLine] / 2.0;
+		}
+
+		float l, r, b, t;
+		atlas.GetFontCharUVBounds(fontTexture, c, l, r, b, t);
+		quadVertices[totalQuads * vertsPerCharacter].in_uv = { l, t }; //lt
+		quadVertices[totalQuads * vertsPerCharacter + 1].in_uv = { r, b };	//rb
+		quadVertices[totalQuads * vertsPerCharacter + 2].in_uv = { l, b };	//lb
+		quadVertices[totalQuads * vertsPerCharacter + 3].in_uv = { l, t };	//lt
+		quadVertices[totalQuads * vertsPerCharacter + 4].in_uv = { r, t };	//rt
+		quadVertices[totalQuads * vertsPerCharacter + 5].in_uv = { r, b };	//rb
+
+		atlas.GetFontCharQuadBounds(fontTexture, c, l, r, b, t, prevChar);
+		quadVertices[totalQuads * vertsPerCharacter].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
+		quadVertices[totalQuads * vertsPerCharacter + 1].ep_position = position + glm::vec3(size * (r + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // rb
+		quadVertices[totalQuads * vertsPerCharacter + 2].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // lb
+		quadVertices[totalQuads * vertsPerCharacter + 3].ep_position = position + glm::vec3(size * (l + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // lt
+		quadVertices[totalQuads * vertsPerCharacter + 4].ep_position = position + glm::vec3(size * (r + cursorPos + xoffset), size * (t - currentLine * fontLineHeight + yoffset), 0); // rt
+		quadVertices[totalQuads * vertsPerCharacter + 5].ep_position = position + glm::vec3(size * (r + cursorPos + xoffset), size * (b - currentLine * fontLineHeight + yoffset), 0); // rb
+
+		quadVertices[totalQuads * vertsPerCharacter].color = color;
+		quadVertices[totalQuads * vertsPerCharacter + 1].color = color;
+		quadVertices[totalQuads * vertsPerCharacter + 2].color = color;
+		quadVertices[totalQuads * vertsPerCharacter + 3].color = color;
+		quadVertices[totalQuads * vertsPerCharacter + 4].color = color;
+		quadVertices[totalQuads * vertsPerCharacter + 5].color = color;
+
+		totalQuads++;
+		prevChar = c;
+		cursorPos += atlas.GetFontCharAdvance(fontTexture, c);
+	}
 }

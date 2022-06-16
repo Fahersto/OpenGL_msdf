@@ -74,7 +74,7 @@ void HandleCamera(double deltaTimeMilliSeconds)
     renderer.SetZoom(renderer.GetZoom() + scrollWheel_);
     if (renderer.GetZoom() < 0)
     {
-        renderer.SetZoom(0);
+       //renderer.SetZoom(0);
     }
 }
 
@@ -109,7 +109,7 @@ int main()
         renderer.BeginFrame();
 
         // draw the texture
-        fontAtlas.DrawText(renderer, "Test");
+        fontAtlas.DrawText("Hello World!", glm::vec3(20,20,0), 20);
 
         // draw frame
         glfwSwapBuffers(window);

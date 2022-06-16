@@ -56,11 +56,11 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 	shader_->SetMatrix4("projection", projection_, true);
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(20, 20, 0.0f));
+	//model = glm::translate(model, glm::vec3(20, 20, 0.0f));
 
-	model = glm::translate(model, glm::vec3(size * 0.5f, 0.0f));
+	//model = glm::translate(model, glm::vec3(size * 0.5f, 0.0f));
 
-	model = glm::scale(model, glm::vec3(size, 1.0f));
+	//model = glm::scale(model, glm::vec3(size, 1.0f));
 
 
 	shader_->SetMatrix4("model", model);

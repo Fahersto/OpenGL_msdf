@@ -38,9 +38,6 @@ class FontAtlas
 	unsigned int vbo_;
 	unsigned int texture_;
 
-
-	static std::vector<VertexData> quadVertices;
-
 	void Initialize(std::string fontFile);
 
 	void GetFontCharUVBounds(TextureHandle atlas, uint32_t unicodeChar,
@@ -56,5 +53,5 @@ class FontAtlas
 public:
 	FontAtlas(std::string fontFile);
 
-	void DrawText(std::string text, glm::vec3 position, float size);
+	void DrawText(Renderer& renderer, std::string text, glm::vec3 position, float size, glm::vec4 color, bool center = true);
 };

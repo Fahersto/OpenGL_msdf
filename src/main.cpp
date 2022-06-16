@@ -14,6 +14,9 @@ int8_t keys_[1024];
 double scrollWheel_;
 
 
+std::string lorem = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr,  sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.";
+
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
     if (key >= 0 && key < 1024)
@@ -92,10 +95,22 @@ int main()
     auto currentFrame = std::chrono::steady_clock::now();
     auto lastFrame = std::chrono::steady_clock::now();
 
+    auto lastFpsDisplayTime = std::chrono::steady_clock::now();
+    int fps = 0;
+    int fpsDisplay = 0;
     while (!glfwWindowShouldClose(window))
     {
         // calculate delta time used for fps independent movement
         currentFrame = std::chrono::steady_clock::now();
+
+        if (std::chrono::duration_cast<std::chrono::microseconds>(currentFrame - lastFpsDisplayTime).count() >= 1000000)
+        {
+            lastFpsDisplayTime = currentFrame;
+            //printf("Fps: %d\n", fps);
+            fpsDisplay = fps;
+            fps = 0;
+        }
+
         auto deltaTimeMilliSeconds = std::chrono::duration_cast<std::chrono::microseconds>(currentFrame - lastFrame).count() / 1000.f;
 
         // clear last frame
@@ -108,9 +123,22 @@ int main()
         // setup shader inputs
         renderer.BeginFrame();
 
-        // draw the texture
-        fontAtlas.DrawText("Hello World!", glm::vec3(20,20,0), 20);
 
+        // disable depth testing to prevent issues with slightly  overlapping characters
+        glDisable(GL_DEPTH_TEST);
+
+        glm::vec4 color = glm::vec4(1, 0, 0, 0.3f);
+        // draw the text
+        //fontAtlas.DrawText("Hello  World!", glm::vec3(10, 10, 0), 20);
+        fontAtlas.DrawText(renderer, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 0, 0), 20, color);
+        fontAtlas.DrawText(renderer, "ABCDEFG", glm::vec3(0, 10, 0), 10, color);
+        fontAtlas.DrawText(renderer, "Hello World!", glm::vec3(0, 20, 0), 10, color);
+        fontAtlas.DrawText(renderer, "123456789", glm::vec3(0, 30, 0), 10, color);
+        fontAtlas.DrawText(renderer, "Hello\nWorld\n!", glm::vec3(0, 70, 0), 10, color);
+
+        // enable depth testing
+        glEnable(GL_DEPTH_TEST);
+        
         // draw frame
         glfwSwapBuffers(window);
 
@@ -125,5 +153,6 @@ int main()
         glfwPollEvents();
 
         lastFrame = currentFrame;
+        fps++;
     }
 }

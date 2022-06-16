@@ -56,12 +56,7 @@ GLFWwindow* Renderer::CreateWindow(std::string name, glm::vec2 resolution, glm::
 	shader_->SetMatrix4("projection", projection_, true);
 
 	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::translate(model, glm::vec3(20, 20, 0.0f));
-
-	//model = glm::translate(model, glm::vec3(size * 0.5f, 0.0f));
-
-	//model = glm::scale(model, glm::vec3(size, 1.0f));
-
+	model = glm::translate(model, glm::vec3(80, 20, 0.0f));
 
 	shader_->SetMatrix4("model", model);
 
@@ -73,10 +68,16 @@ void Renderer::BeginFrame()
 	glm::mat4 camera(1.0f);
 	camera = glm::scale(camera, glm::vec3(zoom_, zoom_, 1.0f));
 	camera = glm::translate(camera, glm::vec3(cameraPosition_, 0.f));
-
-	glm::vec2 sizeInPixels = this->EuToPixel(size) * this->GetZoom();
-	shader_->SetVector2f("sizeInPixels", sizeInPixels);
 	shader_->SetMatrix4("camera", camera);
+
+	int pixelRange = 2;
+	glm::vec2  distanceField = glm::vec2(256, 256);
+	glm::vec2 sizeInPixels = this->EuToPixel(size) * this->GetZoom();
+	float screenPxRange = (sizeInPixels.x / distanceField.x) * pixelRange;
+	shader_->SetFloat("screenPxRange", screenPxRange);
+	shader_->SetVector2f("sizeInPixels", sizeInPixels);
+
+
 }
 
 glm::vec2 Renderer::GetCameraPosition()

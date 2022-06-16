@@ -6,7 +6,6 @@ layout (location = 1) in vec2 uv;
 uniform mat4 model;
 uniform mat4 projection;
 uniform mat4 camera;
-uniform vec2 renderingOffset;
 
 out vec2 TexCoords;
 

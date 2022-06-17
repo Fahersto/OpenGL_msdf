@@ -87,7 +87,8 @@ int main()
     glfwSetKeyCallback(window, key_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    FontAtlas fontAtlas = FontAtlas("C:\\Windows\\Fonts\\arial.ttf");
+    FontAtlas arial = FontAtlas("C:\\Windows\\Fonts\\arial.ttf");
+    FontAtlas broadway = FontAtlas("C:\\Windows\\Fonts\\BROADW.ttf");
 
     auto currentFrame = std::chrono::steady_clock::now();
     auto lastFrame = std::chrono::steady_clock::now();
@@ -129,22 +130,23 @@ int main()
         glm::vec4 green = glm::vec4(0, 1, 0, 1);
 
         // draw the text
-        renderer.DrawText(fontAtlas, "Controls\n\tMove camera:\n\t\twasd/arrowkeys\n\tZoom:\n\t\tscrollwheel", glm::vec3(-80, 30, 0), 2, white, false);
-        renderer.DrawText(fontAtlas, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
-        renderer.DrawText(fontAtlas, "LEFT aligned", glm::vec3(0, 10, 0), 10, green, false);
-        renderer.DrawText(fontAtlas, "I'm a centered text\nwith several\nrows!", glm::vec3(0, -20, 0), 4, white);
+        renderer.DrawText(arial, "Controls\n\tMove camera:\n\t\twasd/arrowkeys\n\tZoom:\n\t\tscrollwheel", glm::vec3(-80, 30, 0), 2, white, false);
+        renderer.DrawText(broadway, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
+        renderer.DrawText(arial, "LEFT aligned", glm::vec3(0, 10, 0), 10, green, false);
+        renderer.DrawText(arial, "I'm a centered text\nwith several\nrows!", glm::vec3(0, -20, 0), 4, white);
 
         const int count = 200;
         std::string text = "Render this " + std::to_string(count) + " times";
         for (int i = 0; i < count; i++)
         {
-            renderer.DrawText(fontAtlas, text, glm::vec3(0, -i*0.1, 0), 10, white);
+            renderer.DrawText(arial, text, glm::vec3(0, -i*0.1, 0), 10, white);
         }
 
         // enable depth testing
         glEnable(GL_DEPTH_TEST);
         
-        renderer.EndFrame(fontAtlas);
+        renderer.EndFrame(arial);
+        renderer.EndFrame(broadway);
 
         // draw frame
         glfwSwapBuffers(window);

@@ -43,7 +43,7 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			TightAtlasPacker packer;
 			// Set atlas parameters:
 			// setDimensions or setDimensionsConstraint to find the best value
-			packer.setDimensionsConstraint(TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_SQUARE);
+			packer.setDimensionsConstraint(TightAtlasPacker::DimensionsConstraint::POWER_OF_TWO_RECTANGLE);
 			// setScale for a fixed size or setMinimumScale to use the largest that fits
 			packer.setMinimumScale(64.0);
 			// setPixelRange or setUnitRange

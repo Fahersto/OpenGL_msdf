@@ -88,7 +88,7 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     FontAtlas arial = FontAtlas("C:\\Windows\\Fonts\\arial.ttf");
-    FontAtlas broadway = FontAtlas("C:\\Windows\\Fonts\\BROADW.ttf");
+    FontAtlas comic = FontAtlas("C:\\Windows\\Fonts\\comic.ttf");
 
     auto currentFrame = std::chrono::steady_clock::now();
     auto lastFrame = std::chrono::steady_clock::now();
@@ -131,7 +131,7 @@ int main()
 
         // draw the text
         renderer.DrawText(arial, "Controls\n\tMove camera:\n\t\twasd/arrowkeys\n\tZoom:\n\t\tscrollwheel", glm::vec3(-80, 30, 0), 2, white, false);
-        renderer.DrawText(broadway, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
+        renderer.DrawText(comic, std::to_string(fpsDisplay) + " fps", glm::vec3(0, 20, 0), 10, red);
         renderer.DrawText(arial, "LEFT aligned", glm::vec3(0, 10, 0), 10, green, false);
         renderer.DrawText(arial, "I'm a centered text\nwith several\nrows!", glm::vec3(0, -20, 0), 4, white);
 
@@ -146,7 +146,7 @@ int main()
         glEnable(GL_DEPTH_TEST);
         
         renderer.EndFrame(arial);
-        renderer.EndFrame(broadway);
+        renderer.EndFrame(comic);
 
         // draw frame
         glfwSwapBuffers(window);

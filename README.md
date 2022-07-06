@@ -9,16 +9,14 @@ git clone --recurse-submodules https://github.com/Fahersto/OpenGL_msdf.git
 - vcpkg install glm:x64-windows
 - vcpkg install glfw3:x64-windows
 
-### Run CMAKE
-
-### Run main.cpp
-
-
+## Build and run
+1. Run CMAKE
+2. Build
+3. Run main.cpp
 
 ## Usage
-
-arrowkeys or WASD to move camera
-scrollwheel to zoom (origin of zoom bist bottom left corner of the window)
+- arrowkeys or WASD to move camera
+- scrollwheel to zoom (origin of zoom bist bottom left corner of the window)
 
 
 ### Credits

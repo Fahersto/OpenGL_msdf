@@ -1,4 +1,4 @@
-#include "Fontatlas.hpp"
+#include "FontAtlas.hpp"
 
 #include "../msdf-atlas-gen/msdf-atlas-gen/msdf-atlas-gen.h"
 #include "../msdf-atlas-gen/msdfgen/msdfgen.h"
@@ -25,7 +25,6 @@ void FontAtlas::Initialize(std::string fontFilename) {
 		// Load font file
 		if (msdfgen::FontHandle* font = msdfgen::loadFont(ft, fontFilename.c_str())) {
 			// Storage for glyph geometry and their coordinates in the atlas
-
 			std::vector<msdf_atlas::GlyphGeometry> glyphs;
 			// FontGeometry is a helper class that loads a set of glyphs from a single font.
 			// It can also be used to get additional font metrics, kerning information, etc.
@@ -55,8 +54,6 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			int width = 0, height = 0;
 			packer.getDimensions(width, height);
 
-
-
 			// The ImmediateAtlasGenerator class facilitates the generation of the atlas bitmap.
 			ImmediateAtlasGenerator<
 				float, // pixel type of buffer for individual glyphs depends on generator function
@@ -71,15 +68,6 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			generator.setThreadCount(4);
 			// Generate atlas bitmap
 			generator.generate(glyphs.data(), glyphs.size());
-
-
-
-
-
-
-
-
-
 
 			msdfgen::BitmapConstRef<unsigned char, 3> bitmap = generator.atlasStorage();
 
@@ -128,10 +116,6 @@ void FontAtlas::Initialize(std::string fontFilename) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glBindTexture(GL_TEXTURE_2D, 0);
 
-
-
-
-
 			std::map<int, uint32_t> indexToCodePoint;
 			for (const msdf_atlas::GlyphGeometry& glyph : glyphs)
 			{
@@ -168,17 +152,16 @@ void FontAtlas::Initialize(std::string fontFilename) {
 				fontKerns[this->fontTexture_][codePointsKey] = kernVal;
 			}
 
-
-
-
 			msdfgen::destroyFont(font);
+		} else {
+			printf("FontAtlas::Initialize: Failed to load font '%s'", fontFilename.c_str());
+			exit(1);
 		}
 		msdfgen::deinitializeFreetype(ft);
 	}
 }
 
-void FontAtlas::GetFontCharUVBounds(unsigned int atlas, uint32_t unicodeChar,
-	float& out_l, float& out_r, float& out_b, float& out_t)
+void FontAtlas::GetFontCharUVBounds(unsigned int atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t)
 {
 	if (fontUVBounds.count(atlas) > 0)
 	{
@@ -191,17 +174,16 @@ void FontAtlas::GetFontCharUVBounds(unsigned int atlas, uint32_t unicodeChar,
 		}
 		else
 		{
-			printf("error\n");
+			printf("FontAtlas::GetFontCharUVBounds: Bounds for character '%c' missing\n", unicodeChar);
 		}
 	}
 	else
 	{
-		printf("error\n");
+		printf("FontAtlas::GetFontCharUVBounds: Bounds missing\n");
 	}
 }
 
-void FontAtlas::GetFontCharQuadBounds(unsigned int atlas, uint32_t unicodeChar,
-	float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar)
+void FontAtlas::GetFontCharQuadBounds(unsigned int atlas, uint32_t unicodeChar, float& out_l, float& out_r, float& out_b, float& out_t, uint32_t prevChar)
 {
 	if (fontQuadBounds.count(atlas) > 0)
 	{
@@ -219,12 +201,12 @@ void FontAtlas::GetFontCharQuadBounds(unsigned int atlas, uint32_t unicodeChar,
 		}
 		else
 		{
-			printf("error\n");
+			printf("FontAtlas::GetFontCharQuadBounds: Quadbounds for character '%c' missing\n", unicodeChar);
 		}
 	}
 	else
 	{
-		printf("error\n");
+		printf("FontAtlas::GetFontCharQuadBounds: Quadbounds missing\n");
 	}
 }
 
@@ -238,13 +220,13 @@ double FontAtlas::GetFontCharAdvance(unsigned int atlas, uint32_t unicodeChar)
 		}
 		else
 		{
-			printf("error\n");
+			printf("FontAtlas::GetFontCharAdvance: FontAdvances for chracter '%c' missing\n", unicodeChar);
 			return 0.0;
 		}
 	}
 	else
 	{
-		printf("error\n");
+		printf("FontAtlas::GetFontCharAdvance: FontAdvances missing\n");
 		return 0.0;
 	}
 }
@@ -259,7 +241,7 @@ void FontAtlas::GetFontVerticalMetrics(unsigned int atlas, double& out_lineHeigh
 	}
 	else
 	{
-		printf("error\n");
+		printf("FontAtlas::GetFontVerticalMetrics: FontVertical metrics missing\n");
 	}
 }
 
